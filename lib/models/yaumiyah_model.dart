@@ -1,12 +1,12 @@
 class YaumiyahModel {
   final int id;
   final String yaumiyah;
-  final String selectedValue;
+  String selectedValue;
 
   YaumiyahModel({
     required this.id,
     required this.yaumiyah,
-    required this.selectedValue,
+    this.selectedValue = 'Tidak',
   });
 
   factory YaumiyahModel.fromJson(Map<String, dynamic> json) {

@@ -15,32 +15,53 @@ class YaumiyahController extends GetxController {
   }
 
   void fetchYaumiyah() async {
-    final response = await http.get(
-      Uri.parse('$url/api/mutabaah-yaumiyah'),
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${GetStorage().read('token')}',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse('$url/api/mutabaah-yaumiyah'),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ${GetStorage().read('token')}',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
-      var yaumiyahData = data['yaumiyah'] as List;
-      var dataRecords = data['data'] as Map<String, dynamic>;
+      if (response.statusCode == 200) {
+        var data = json.decode(response.body);
 
-      // Convert yaumiyah data to list of YaumiyahModel
-      var activities = yaumiyahData.map((item) {
-        return YaumiyahModel(
-          id: item['id'],
-          yaumiyah: item['yaumiyah'],
-          selectedValue:
-              dataRecords[item['id']?.toString()]['keterangan'] ?? 'Tidak',
-        );
-      }).toList();
+        // Pastikan 'yaumiyah' ada dan merupakan List
+        if (data.containsKey('yaumiyah') && data['yaumiyah'] is List) {
+          var yaumiyahData = data['yaumiyah'] as List;
 
-      yaumiyahList.value = activities;
-    } else {
-      Get.snackbar('Error', 'Failed to load data');
+          // Periksa apakah 'dataa' ada dan merupakan Map
+          var yaumiyahStatus = <String, dynamic>{};
+          if (data.containsKey('dataa') &&
+              data['dataa'] is Map<String, dynamic>) {
+            yaumiyahStatus = data['dataa'] as Map<String, dynamic>;
+          }
+
+          yaumiyahList.value = yaumiyahData.map((item) {
+            String selectedValue = 'Tidak'; // Nilai default
+
+            // Periksa apakah ada status untuk yaumiyah_id tertentu
+            if (yaumiyahStatus.isNotEmpty &&
+                yaumiyahStatus.containsKey(item['id'].toString())) {
+              var status = yaumiyahStatus[item['id'].toString()];
+              selectedValue = status['keterangan'] ?? 'Tidak';
+            }
+
+            return YaumiyahModel(
+              id: item['id'],
+              yaumiyah: item['yaumiyah'],
+              selectedValue: selectedValue,
+            );
+          }).toList();
+        } else {
+          Get.snackbar('Error', 'Invalid response structure');
+        }
+      } else {
+        Get.snackbar('Error', 'Failed to load data: ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to load data: $e');
     }
   }
 
