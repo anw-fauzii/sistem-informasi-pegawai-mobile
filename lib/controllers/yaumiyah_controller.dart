@@ -26,9 +26,19 @@ class YaumiyahController extends GetxController {
     if (response.statusCode == 200) {
       var data = json.decode(response.body);
       var yaumiyahData = data['yaumiyah'] as List;
-      yaumiyahList.value = yaumiyahData
-          .map((yaumiyah) => YaumiyahModel.fromJson(yaumiyah))
-          .toList();
+      var dataRecords = data['data'] as Map<String, dynamic>;
+
+      // Convert yaumiyah data to list of YaumiyahModel
+      var activities = yaumiyahData.map((item) {
+        return YaumiyahModel(
+          id: item['id'],
+          yaumiyah: item['yaumiyah'],
+          selectedValue:
+              dataRecords[item['id']?.toString()]['keterangan'] ?? 'Tidak',
+        );
+      }).toList();
+
+      yaumiyahList.value = activities;
     } else {
       Get.snackbar('Error', 'Failed to load data');
     }
@@ -52,7 +62,6 @@ class YaumiyahController extends GetxController {
         'selectedValue': activity.selectedValue,
       };
     }).toList();
-    print('Data to be sent: ${json.encode({'yaumiyah': data})}');
 
     final response = await http.post(
       Uri.parse('$url/api/mutabaah-yaumiyah'),
